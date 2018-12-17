@@ -58,7 +58,8 @@ methods.addKey2 = (userId, game, key) => {
           added: datetime,
           game: game,
           key: key,
-          redeemed: false
+          redeemed: false,
+          verified: false
         };
         dbMethods.dbInsertOne("114184844191334400", "giftbot", "_keys", update);
         resolve(
@@ -144,7 +145,7 @@ methods.redeemKey = (user, id) => {
                   methods
                     .checkOwner(user, id)
                     .then(function(owner) {
-                      if (owner) {
+                      if (!owner) {
                         methods
                           .removeKey(id)
                           .then(function() {
@@ -200,7 +201,7 @@ methods.redeemKey = (user, id) => {
                     });
                 } else {
                   resolve(
-                    "You have reached your redemption limit.  You may increase it by providing verified keys.  It may also increase at a later date"
+                    "You have reached your redemption limit. This could be because you didn't verify your last key received was working, or you received too many keys.  Providing verified keys increases your limit.  The limit may also increase at a later date."
                   );
                 }
               })
@@ -218,13 +219,104 @@ methods.redeemKey = (user, id) => {
 methods.checkLimit = user => {
   return new Promise(function(resolve, reject) {
     methods.getUser(user).then(function(result) {
-      let userLimit = limit + result.verified;
-      if (result.redeemed >= userLimit) {
+      if (result.redeemed > result.verified) {
         resolve(false);
       } else {
-        resolve(true);
+        let userLimit = limit + result.bonus;
+        if (result.redeemed >= userLimit) {
+          resolve(false);
+        } else {
+          resolve(true);
+        }
       }
     });
+  });
+};
+
+methods.needVerify = user => {
+  return new Promise(function(resolve, reject) {
+    methods
+      .getUser(user)
+      .then(function(result) {
+        if (result.verified < result.redeemed) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+  });
+};
+
+methods.verify = user => {
+  return new Promise(function(resolve, reject) {
+    methods
+      .getUser(user)
+      .then(function(result) {
+        var filter = { user: result.user };
+        var update = { $inc: { verified: 1 } };
+        dbMethods
+          .dbUpdateOne(
+            "114184844191334400",
+            "giftbot",
+            "_users",
+            filter,
+            update
+          )
+          .then(function() {
+            var keyFilter = { _id: result.lastKey };
+            var keyUpdate = { $set: { verified: true } };
+            dbMethods
+              .dbUpdateOne(
+                "114184844191334400",
+                "giftbot",
+                "_keys",
+                keyFilter,
+                keyUpdate
+              )
+              .then(function() {
+                methods.addBonus(result.lastKey);
+                resolve();
+              });
+          })
+          .catch(function(err) {
+            reject(err);
+          });
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+  });
+};
+
+methods.addBonus = key => {
+  return new Promise(function(resolve, reject) {
+    var query = { _id: key };
+    dbMethods
+      .dbFind("114184844191334400", "giftbot", "_keys", query)
+      .then(function(result) {
+        var userFilter = { _id: result.user };
+        var userUpdate = { $inc: { bonus: 1 } };
+        dbMethods
+          .dbUpdateOne(
+            "114184844191334400",
+            "giftbot",
+            "_users",
+            userFilter,
+            userUpdate
+          )
+          .then(function(result) {
+            resolve(result);
+          })
+          .catch(function(err) {
+            reject(err);
+          });
+      })
+      .catch(function(err) {
+        reject(err);
+      });
   });
 };
 
@@ -267,7 +359,13 @@ methods.checkOwner = (user, id) => {
 
 methods.createUser = user => {
   return new Promise(function(resolve, reject) {
-    var update = { user: user.id, given: 0, redeemed: 0, verified: 0 };
+    var update = {
+      user: user.id,
+      given: 0,
+      redeemed: 0,
+      verified: 0,
+      bonus: 0
+    };
     dbMethods
       .dbInsertOne("114184844191334400", "giftbot", "_users", update)
       .then(function(result) {
@@ -311,11 +409,26 @@ methods.decrementGiven = user => {
 methods.claimKey = (id, user) => {
   return new Promise(function(resolve, reject) {
     var filter = { _id: id };
-    var update = {$set: { redeemed: true, redeemer: user.id } };
+    var update = { $set: { redeemed: true, redeemer: user.id } };
     dbMethods
       .dbUpdateOne("114184844191334400", "giftbot", "_keys", filter, update)
       .then(function(result) {
-        resolve(result);
+        var userFilter = { user: user.id };
+        var userUpdate = { $set: { lastKey: id } };
+        dbMethods
+          .dbUpdateOne(
+            "114184844191334400",
+            "giftbot",
+            "_users",
+            userFilter,
+            userUpdate
+          )
+          .then(function(result) {
+            resolve(result);
+          })
+          .catch(function(err) {
+            reject(err);
+          });
       })
       .catch(function(err) {
         reject(err);
