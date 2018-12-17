@@ -145,7 +145,7 @@ methods.redeemKey = (user, id) => {
                   methods
                     .checkOwner(user, id)
                     .then(function(owner) {
-                      if (!owner) {
+                      if (owner) {
                         methods
                           .removeKey(id)
                           .then(function() {
