@@ -1,5 +1,5 @@
 exports.run = (client, message, args) => {
-  if (message.channel.type !== dm) {
+  if (message.guild !== null) {
     message.delete();
   }
   message.author.send(
