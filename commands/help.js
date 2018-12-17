@@ -8,6 +8,6 @@ exports.run = (client, message, args) => {
         "**!receive #**: Receive specified key (if you were the one who added it, it removes it from the list)\n" +
         "**!verify**: Verifies that the last key you received works, necessary to receive more keys.  If a key does not work, please reach out to Fiz\n\n" +
         "Note: There is a limit on the number of games one can receive.  That limit will be evaluated over time and may change.\n\n"
-    );
+    ).catch(function(err){message.channel.send(err)});
   });
 };

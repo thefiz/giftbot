@@ -34,6 +34,10 @@ client.on("message", message => {
   });
 });
 
+client.on("error", error => {
+  console.log(error);
+});
+
 exports.checkHardcode = command => {
   return new Promise(function(resolve, reject) {
     fs.stat(path + "/commands/" + command + ".js", (err, status) => {
@@ -48,7 +52,9 @@ exports.checkHardcode = command => {
 
 exports.runHardcode = (client, message, args, command) => {
   let commandFile = require(`./commands/${command}.js`);
-  commandFile.run(client, message, args);
+  commandFile.run(client, message, args).catch(function(err) {
+    console.log(err);
+  });
 };
 
 exports.dbInit = function() {
