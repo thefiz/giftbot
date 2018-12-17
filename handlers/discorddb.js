@@ -17,11 +17,17 @@ methods.addKey = (message, game, key) => {
             .createUser(message.author)
             .then(function(result) {
               userId = result.insertedId;
-              methods.incrementGiven(userId);
               methods
                 .addKey2(userId, game, key)
                 .then(function(result) {
-                  resolve(result);
+                  methods
+                    .incrementGiven(userId)
+                    .then(function() {
+                      resolve(result);
+                    })
+                    .catch(function(err) {
+                      reject(err);
+                    });
                 })
                 .catch(function(err) {
                   reject(err);
@@ -32,11 +38,17 @@ methods.addKey = (message, game, key) => {
             });
         } else {
           userId = result._id;
-          methods.incrementGiven(userId);
           methods
             .addKey2(userId, game, key)
             .then(function(result) {
-              resolve(result);
+              methods
+                .incrementGiven(userId)
+                .then(function() {
+                  resolve(result);
+                })
+                .catch(function(err) {
+                  reject(err);
+                });
             })
             .catch(function(err) {
               reject(err);

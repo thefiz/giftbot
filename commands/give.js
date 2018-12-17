@@ -26,9 +26,14 @@ exports.run = (client, message, [...args]) => {
         );
         reject("Incorrect Format");
       } else {
-        discordDb.addKey(message, target[1], target[0]).then(function(result) {
-          message.author.send(result);
-        });
+        discordDb
+          .addKey(message, target[1], target[0])
+          .then(function(result) {
+            message.author.send(result);
+          })
+          .catch(function(err) {
+            message.author.send(err);
+          });
       }
     }
   });
