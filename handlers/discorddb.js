@@ -303,6 +303,41 @@ methods.verify = user => {
   });
 };
 
+methods.reclaimKeys = userObject => {
+  return new Promise(function(resolve, reject) {
+    var gamelist = "";
+    var query = { user: userObject, redeemed: false };
+    dbMethods
+      .dbFindMany("114184844191334400", "giftbot", "_keys", query)
+      .then(function(result) {
+        for (let value of result) {
+          gamelist = gamelist.concat(value.game + ": " + value.key + "\r\n");
+          let filter = { _id: value._id };
+          dbMethods.dbDeleteOne(
+            "114184844191334400",
+            "giftbot",
+            "_keys",
+            filter
+          );
+        }
+        fs.writeFile(
+          "reclaim" + userObject.generationTime + ".txt",
+          gamelist,
+          function(err) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve("reclaim" + userObject.generationTime + ".txt");
+            }
+          }
+        );
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+  });
+};
+
 methods.addBonus = key => {
   return new Promise(function(resolve, reject) {
     var query = { _id: key };

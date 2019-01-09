@@ -106,23 +106,6 @@ methods.dbFind = (dbId, type, collection, query) => {
   });
 };
 
-// methods.dbFindAndModify = (dbId, type, collection, query, update) => {
-//   return new Promise(function(resolve, reject){
-//     methods.dbConnect().then(function(db){
-//       let dbo = db.db(type)
-//       db.runCommand(
-//         {
-//           findAndModify: dbId + collection,
-//           query: query,
-//           update: update,
-//           "new": true,
-//           upsert: true
-//         }
-//       )
-//     })
-//   })
-// }
-
 methods.dbInsertOne = (dbId, type, collection, update) => {
   return new Promise(function(resolve, reject) {
     methods.dbConnect().then(function(db) {
