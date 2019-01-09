@@ -3,9 +3,14 @@ const discordDb = require("../handlers/discorddb");
 exports.run = (client, message, [...args]) => {
   return new Promise(function(resolve, reject) {
     if (message.channel.type !== "dm") {
-      message.delete().then(function() {
-        message.channel.send("please DM your keys to Gift Bot");
-      });
+      message
+        .delete()
+        .then(function() {
+          message.channel.send("please DM your keys to Gift Bot");
+        })
+        .catch(function() {
+          reject("Unable to Delete");
+        });
       reject("DM Only");
     } else {
       const fullString = args.join(" ");
