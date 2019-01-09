@@ -52,9 +52,9 @@ exports.checkHardcode = command => {
 
 exports.runHardcode = (client, message, args, command) => {
   let commandFile = require(`./commands/${command}.js`);
-  commandFile.run(client, message, args).catch(function(err) {
-    console.log(err);
-  });
+  commandFile
+    .run(client, message, args)
+    .catch(error => message.channel.send(error));
 };
 
 exports.dbInit = function() {
