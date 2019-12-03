@@ -60,17 +60,13 @@ methods.dbConnect = () => {
       connectTimeoutMS: 30000,
       useNewUrlParser: true
     };
-    MongoClient.connect(
-      uri,
-      options,
-      function(err, db) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(db);
-        }
+    MongoClient.connect(uri, options, function(err, db) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(db);
       }
-    );
+    });
   });
 };
 
@@ -149,6 +145,24 @@ methods.dbUpdateOne = (dbId, type, collection, filter, update) => {
       dbo
         .collection(dbId + collection)
         .updateOne(filter, update, function(err, result) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
+        });
+      db.close();
+    });
+  });
+};
+
+methods.dbUpdateMany = (dbId, type, collection, filter, update) => {
+  return new Promise(function(resolve, reject) {
+    methods.dbConnect().then(function(db) {
+      let dbo = db.db(type);
+      dbo
+        .collection(dbId + collection)
+        .updateMany(filter, update, function(err, result) {
           if (err) {
             reject(err);
           } else {

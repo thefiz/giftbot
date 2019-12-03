@@ -222,7 +222,9 @@ methods.redeemKey = (user, id) => {
               });
           }
         } else {
-          resolve("Invalid ID#");
+          resolve(
+            "Invalid ID#, the key may have already been redeemed by another user"
+          );
         }
       });
   });
@@ -369,7 +371,13 @@ methods.addBonus = key => {
 
 methods.getUser = user => {
   return new Promise(function(resolve, reject) {
-    var query = { user: user.id };
+    var userID = "";
+    if (typeof user.id !== "undefined") {
+      userID = user.id;
+    } else {
+      userID = user;
+    }
+    var query = { user: userID };
     dbMethods
       .dbFind("114184844191334400", "giftbot", "_users", query)
       .then(function(result) {
@@ -461,7 +469,9 @@ methods.claimKey = (id, user) => {
       .dbUpdateOne("114184844191334400", "giftbot", "_keys", filter, update)
       .then(function(result) {
         var userFilter = { user: user.id };
-        var userUpdate = { $set: { lastKey: id } };
+        var userUpdate = {
+          $set: { lastKey: id, timeClaimed: Date.now(), reminded: false }
+        };
         dbMethods
           .dbUpdateOne(
             "114184844191334400",
@@ -502,6 +512,103 @@ methods.counter = name => {
       .catch(function(err) {
         reject(err);
       });
+  });
+};
+
+methods.resetUsers = () => {
+  return new Promise(function(resolve, reject) {
+    var filter = {};
+    var update = { $set: { redeemed: 0, verified: 0, bonus: 0 } };
+    dbMethods.dbUpdateMany(
+      "114184844191334400",
+      "giftbot",
+      "_users",
+      filter,
+      update
+    );
+    resolve();
+  });
+};
+
+methods.fixKeys = () => {
+  return new Promise(function(resolve, reject) {
+    // var gamelist = "";
+    var filter = { redeemed: 0 };
+    var update = { $set: { redeemed: false, verified: false } };
+    // dbMethods
+    //   .dbFindMany("114184844191334400", "giftbot", "_keys", filter)
+    //   .then(function(result) {
+    //     for (let value of result)
+    //       gamelist = gamelist.concat(value._id + ": " + value.game + "\r\n");
+    //     fs.writeFile("keyquery.txt", gamelist, function(err) {
+    //       if (err) {
+    //         reject(err);
+    //       } else {
+    //         resolve();
+    //       }
+    //     });
+    //   });
+    dbMethods.dbUpdateMany(
+      "114184844191334400",
+      "giftbot",
+      "_keys",
+      filter,
+      update
+    );
+    resolve();
+  });
+};
+
+methods.verifyCheck = () => {
+  return new Promise(function(resolve, reject) {
+    var filter = { redeemed: true, verified: false };
+    dbMethods
+      .dbFindMany("114184844191334400", "giftbot", "_keys", filter)
+      .then(function(result) {
+        for (let value of result) {
+          if (typeof value.reminded !== "undefined") {
+            if (value.reminded) {
+              //if user was reminded
+              discordMethods
+                .noResponse(value.redeemer)
+                .then(function() {
+                  methods.verify(value.redeemer);
+                })
+                .catch(function(err) {
+                  reject(err);
+                });
+            }
+          }
+          //if user wasn't reminded
+          discordMethods
+            .remindUser(value.redeemer)
+            .then(function() {
+              var query = { key: value.key };
+              var update = { $set: { reminded: true } };
+              dbMethods
+                .dbUpdateOne(
+                  "114184844191334400",
+                  "giftbot",
+                  "_keys",
+                  query,
+                  update
+                )
+                .then(function() {
+                  return;
+                })
+                .catch(function(err) {
+                  reject(err);
+                });
+            })
+            .catch(function(err) {
+              reject(err);
+            });
+        }
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+    resolve("Success");
   });
 };
 

@@ -21,6 +21,7 @@ exports.run = (client, message, [...args]) => {
           if ((m.content = "yes")) {
             discordDb.verify(message.author).then(function() {
               message.author.send("Successfully verified key");
+              client.channels.get("410626695050297355").send(message.author + " just verified the last key worked")
               resolve();
             });
           }

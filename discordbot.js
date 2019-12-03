@@ -4,6 +4,7 @@ const config = require("./config.json");
 const fs = require("fs");
 const path = __dirname;
 const dbMethods = require("./handlers/db");
+const discordDb = require("./handlers/discorddb");
 
 client.login(config.discord.bot.token);
 
@@ -71,3 +72,66 @@ exports.dbInit = function() {
     }
   });
 };
+
+exports.remindUser = function(userID) {
+  return new Promise(function(resolve, reject) {
+    client.users
+      .get(userID)
+      .send(
+        "You have not verified the key you received has worked, please take a moment to do so using the **!verify** command.  If I do not hear back from you, I will auto verify it.  \n\nIf the key is not working, please reach out to Fiz ASAP"
+      )
+      .then(function() {
+        client.channels
+          .get("410626695050297355")
+          .send(
+            "<@" +
+              userID +
+              "> hasn't verified the key they have received, I have sent a reminder"
+          );
+        resolve();
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+  });
+};
+
+exports.noResponse = function(user) {
+  return new Promise(function(resolve, reject) {
+    client.users
+      .get(userID)
+      .send(
+        "I still haven't heard from you regarding the key you received.  I have auto verified it as working.  If it does not work, please reach out to Fiz"
+      )
+      .then(function() {
+        client.channels
+          .get("410626695050297355")
+          .send(
+            "<@" +
+              userID +
+              "> hasn't responded to the verification reminder, I have auto verified the key"
+          );
+        resolve();
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+  });
+};
+
+exports.verifyTimer = function() {
+  return new Promise(function(resolve, reject) {
+    discordDb
+      .verifyCheck()
+      .then(function(result) {
+        if ((result = "Success")) {
+          resolve();
+        }
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+  });
+};
+
+setInterval(exports.verifyTimer, 3600000);

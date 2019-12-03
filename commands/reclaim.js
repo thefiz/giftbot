@@ -22,6 +22,7 @@ exports.run = (client, message, [...args]) => {
             })
             .then(function() {
               fs.unlink(filename, resultHandler);
+              client.channels.get("410626695050297355").send(message.author + " just reclaimed all their submitted keys")
             });
         });
       });

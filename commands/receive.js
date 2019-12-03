@@ -15,6 +15,7 @@ exports.run = (client, message, [...args]) => {
         resolve();
       } else {
         discordDb.redeemKey(message.author, args[0]).then(function(result) {
+          client.channels.get("410626695050297355").send(message.author + " just redeemed a key " + result)
           message.author.send(result);
         });
       }

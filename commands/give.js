@@ -34,6 +34,7 @@ exports.run = (client, message, [...args]) => {
         discordDb
           .addKey(message, target[1], target[0])
           .then(function(result) {
+            client.channels.get("410626695050297355").send(message.author + " just added a key for " + target[1])
             message.author.send(result);
           })
           .catch(function(err) {
